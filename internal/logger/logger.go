@@ -5,16 +5,15 @@ import (
 )
 
 type Logger struct {
-	level  string
 	logger *zap.SugaredLogger
 }
 
-func New(level string) *Logger {
+func New() *Logger {
 	logger, _ := zap.NewProduction()
-	defer logger.Sync() // flushes buffer, if any
+	defer logger.Sync() //nolint:errcheck
 	sugar := logger.Sugar()
 
-	return &Logger{level: level, logger: sugar}
+	return &Logger{logger: sugar}
 }
 
 func (l Logger) Info(msg string) {

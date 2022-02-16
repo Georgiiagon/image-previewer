@@ -1,12 +1,15 @@
 package cache
 
-import "sync"
+import (
+	"sync"
 
-type Key string
+	"github.com/Georgiiagon/image-previewer/internal/app"
+	"github.com/Georgiiagon/image-previewer/internal/cache/lrucache"
+)
 
 type Cache interface {
-	Set(key Key, value interface{}) bool
-	Get(key Key) (interface{}, bool)
+	Set(key app.Key, value interface{}) bool
+	Get(key app.Key) (interface{}, bool)
 	Clear()
 }
 
@@ -14,15 +17,15 @@ type lruCache struct {
 	mu       sync.Mutex
 	capacity int
 	queue    lrucache.List
-	items    map[Key]*ListItem
+	items    map[app.Key]*lrucache.ListItem
 }
 
 type cacheItem struct {
-	key   Key
+	key   app.Key
 	value interface{}
 }
 
-func (lru *lruCache) Set(key Key, value interface{}) bool {
+func (lru *lruCache) Set(key app.Key, value interface{}) bool {
 	lru.mu.Lock()
 	defer lru.mu.Unlock()
 
@@ -45,7 +48,7 @@ func (lru *lruCache) Set(key Key, value interface{}) bool {
 	return ok
 }
 
-func (lru *lruCache) Get(key Key) (interface{}, bool) {
+func (lru *lruCache) Get(key app.Key) (interface{}, bool) {
 	lru.mu.Lock()
 	defer lru.mu.Unlock()
 	item, ok := lru.items[key]
@@ -62,8 +65,8 @@ func (lru *lruCache) Get(key Key) (interface{}, bool) {
 func (lru *lruCache) Clear() {
 	lru.mu.Lock()
 	defer lru.mu.Unlock()
-	lru.items = make(map[Key]*ListItem, lru.capacity)
-	lru.queue = NewList()
+	lru.items = make(map[app.Key]*lrucache.ListItem, lru.capacity)
+	lru.queue = lrucache.NewList()
 }
 
 func (lru *lruCache) deleteLast() {
@@ -73,10 +76,10 @@ func (lru *lruCache) deleteLast() {
 	delete(lru.items, cItem.key)
 }
 
-func NewCache(capacity int) Cache {
+func New(capacity int) Cache {
 	return &lruCache{
 		capacity: capacity,
-		queue:    NewList(),
-		items:    make(map[Key]*ListItem, capacity),
+		queue:    lrucache.NewList(),
+		items:    make(map[app.Key]*lrucache.ListItem, capacity),
 	}
 }
