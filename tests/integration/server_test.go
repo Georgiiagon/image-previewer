@@ -19,6 +19,7 @@ import (
 const (
 	firstURL  = "/resize/100/100/"
 	secondURL = "/resize/200/100/"
+	wrongURL  = "/resize/-1/100/"
 	imageURL  = "http://sebweo.com/wp-content/uploads/2020/01/what-is-jpeg_thumb-800x478.jpg?x72922"
 )
 
@@ -75,6 +76,48 @@ func TestServer(t *testing.T) {
 	secondByteBody, _ := ioutil.ReadAll(resp.Body)
 
 	require.Greater(t, len(secondByteBody), len(firstByteBody))
+	err = resp.Body.Close()
+	require.NoError(t, err)
+}
+
+func TestServerError(t *testing.T) {
+	serverReady := make(chan struct{})
+	go func() {
+		setUp(serverReady)
+	}()
+	<-serverReady
+
+	// second request with 100x100
+	req, err := http.NewRequest(echo.GET, "http://"+Host+":"+Port+wrongURL+imageURL, nil)
+
+	require.NoError(t, err)
+	client := http.Client{}
+	resp, err := client.Do(req)
+
+	require.NoError(t, err)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	require.Equal(t, resp.Header.Get("Content-Type"), "")
+	err = resp.Body.Close()
+	require.NoError(t, err)
+}
+
+func TestWrongUrl(t *testing.T) {
+	serverReady := make(chan struct{})
+	go func() {
+		setUp(serverReady)
+	}()
+	<-serverReady
+
+	// second request with 100x100
+	req, err := http.NewRequest(echo.GET, "http://"+Host+":"+Port+firstURL+"someurl", nil)
+
+	require.NoError(t, err)
+	client := http.Client{}
+	resp, err := client.Do(req)
+
+	require.NoError(t, err)
+	require.Equal(t, http.StatusBadRequest, resp.StatusCode)
+	require.Equal(t, resp.Header.Get("Content-Type"), "")
 	err = resp.Body.Close()
 	require.NoError(t, err)
 }
