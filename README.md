@@ -16,7 +16,7 @@ make run-img
 
 Отправьте GET запрос по следующему адресу
 ```shell
-http://localhost:4000/{width}/{height}/{target.url/image.jpg}
+http://localhost:4000/resize/{width}/{height}/{http://image.jpg}
 ```
 Например
 ```shell
