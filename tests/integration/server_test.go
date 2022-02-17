@@ -2,7 +2,6 @@ package integrationt_test
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"testing"
@@ -19,7 +18,7 @@ import (
 
 const (
 	firstURL  = "/resize/100/100/"
-	secondURL = "/resize/100/100/"
+	secondURL = "/resize/200/100/"
 	imageURL  = "http://sebweo.com/wp-content/uploads/2020/01/what-is-jpeg_thumb-800x478.jpg?x72922"
 )
 
@@ -28,7 +27,7 @@ var (
 	Host string
 )
 
-func setUp() {
+func setUp(ch chan struct{}) {
 	logg := logger.New()
 	cfg := config.New()
 	Host = cfg.App.Host
@@ -38,14 +37,14 @@ func setUp() {
 	imagePreviewer := app.New(logg, c, service)
 
 	server := internalhttp.NewServer(logg, imagePreviewer, cfg)
+	ch <- struct{}{}
 	server.Start(context.Background())
 }
 
 func TestServer(t *testing.T) {
 	serverReady := make(chan struct{})
 	go func() {
-		setUp()
-		serverReady <- struct{}{}
+		setUp(serverReady)
 	}()
 	<-serverReady
 
@@ -54,16 +53,13 @@ func TestServer(t *testing.T) {
 
 	require.NoError(t, err)
 	client := http.Client{}
-	fmt.Println(1)
 	resp, err := client.Do(req)
-	fmt.Println(2)
 
 	require.NoError(t, err)
-
+	require.Equal(t, http.StatusOK, resp.StatusCode)
 	require.Equal(t, resp.Header.Get("Content-Type"), "image/jpeg")
 
-	firstByteBody, err := ioutil.ReadAll(resp.Body)
-	require.NoError(t, err)
+	firstByteBody, _ := ioutil.ReadAll(resp.Body)
 
 	err = resp.Body.Close()
 	require.NoError(t, err)
@@ -73,10 +69,11 @@ func TestServer(t *testing.T) {
 	require.NoError(t, err)
 	resp, err = client.Do(req)
 	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, resp.StatusCode)
 	require.Equal(t, resp.Header.Get("Content-Type"), "image/jpeg")
 
-	secondByteBody, err := ioutil.ReadAll(resp.Body)
-	require.NoError(t, err)
+	secondByteBody, _ := ioutil.ReadAll(resp.Body)
+
 	require.Greater(t, len(secondByteBody), len(firstByteBody))
 	err = resp.Body.Close()
 	require.NoError(t, err)
