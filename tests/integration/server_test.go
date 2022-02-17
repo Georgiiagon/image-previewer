@@ -3,6 +3,10 @@ package integrationt_test
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"net/http"
+	"testing"
+
 	"github.com/Georgiiagon/image-previewer/internal/app"
 	"github.com/Georgiiagon/image-previewer/internal/cache"
 	"github.com/Georgiiagon/image-previewer/internal/config"
@@ -11,17 +15,24 @@ import (
 	"github.com/Georgiiagon/image-previewer/internal/services"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/require"
-	"io/ioutil"
-	"net/http"
-	"testing"
 )
 
-const firstURL = "http://localhost:3000/resize/100/100/http://sebweo.com/wp-content/uploads/2020/01/what-is-jpeg_thumb-800x478.jpg?x72922"
-const secondURL = "http://localhost:3000/resize/200/100/http://sebweo.com/wp-content/uploads/2020/01/what-is-jpeg_thumb-800x478.jpg?x72922"
+const (
+	firstURL  = "/resize/100/100/"
+	secondURL = "/resize/100/100/"
+	imageURL  = "http://sebweo.com/wp-content/uploads/2020/01/what-is-jpeg_thumb-800x478.jpg?x72922"
+)
+
+var (
+	Port string
+	Host string
+)
 
 func setUp() {
 	logg := logger.New()
 	cfg := config.New()
+	Host = cfg.App.Host
+	Port = cfg.App.Port
 	c := cache.New(cfg.Cache.Length)
 	service := services.New(logg)
 	imagePreviewer := app.New(logg, c, service)
@@ -39,7 +50,7 @@ func TestServer(t *testing.T) {
 	<-serverReady
 
 	// second request with 100x100
-	req, err := http.NewRequest(echo.GET, firstURL, nil)
+	req, err := http.NewRequest(echo.GET, "http://"+Host+":"+Port+firstURL+imageURL, nil)
 
 	require.NoError(t, err)
 	client := http.Client{}
@@ -58,7 +69,7 @@ func TestServer(t *testing.T) {
 	require.NoError(t, err)
 
 	// second request with 200x100
-	req, err = http.NewRequest(echo.GET, secondURL, nil)
+	req, err = http.NewRequest(echo.GET, "http://"+Host+":"+Port+secondURL+imageURL, nil)
 	require.NoError(t, err)
 	resp, err = client.Do(req)
 	require.NoError(t, err)
