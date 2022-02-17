@@ -30,7 +30,6 @@ linters:
     - gofumpt
     - goheader
     - goprintffuncname
-    - gosec
     - gosimple
     - govet
     - ifshort
@@ -41,7 +40,6 @@ linters:
     - misspell
     - nestif
     - nilerr
-    - noctx
     - nolintlint
     - prealloc
     - predeclared

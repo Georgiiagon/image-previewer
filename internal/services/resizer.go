@@ -37,7 +37,7 @@ func (s *Service) Resize(byteImg []byte, height int, width int) ([]byte, string,
 	}
 
 	img = resize.Resize(uint(width), uint(height), img, resize.Lanczos3)
-	out, err := os.Create("/tmp/" + newName) //nolint:gosec
+	out, err := os.Create("/tmp/" + newName)
 	if err != nil {
 		return nil, "", err
 	}
@@ -59,7 +59,7 @@ func (s *Service) Resize(byteImg []byte, height int, width int) ([]byte, string,
 }
 
 func (s *Service) Proxy(url string, headers http.Header) ([]byte, error) {
-	r, err := http.Get(url) //nolint:gosec,noctx
+	r, err := http.Get(url)
 	if err != nil {
 		return nil, err
 	}
